@@ -42,6 +42,72 @@ function initializeDatabase() {
   });
 }
 
+// Product CRUD APIs
+app.get('/api/products', (req, res) => {
+  db.all('SELECT * FROM products ORDER BY name ASC', [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+app.post('/api/products', (req, res) => {
+  const { id, name, category, cost_price, selling_price, quantity, updated_at } = req.body;
+  if (!id || !name || cost_price === undefined || selling_price === undefined || quantity === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const timestamp = updated_at || Date.now();
+  db.run(
+    `INSERT INTO products (id, name, category, cost_price, selling_price, quantity, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, name, category, cost_price, selling_price, quantity, timestamp],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.status(201).json({ id, name, category, cost_price, selling_price, quantity, updated_at: timestamp });
+    }
+  );
+});
+
+app.put('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, category, cost_price, selling_price, quantity, updated_at } = req.body;
+  if (!name || cost_price === undefined || selling_price === undefined || quantity === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const timestamp = updated_at || Date.now();
+  db.run(
+    `UPDATE products
+     SET name = ?, category = ?, cost_price = ?, selling_price = ?, quantity = ?, updated_at = ?
+     WHERE id = ?`,
+    [name, category, cost_price, selling_price, quantity, timestamp, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+      res.json({ id, name, category, cost_price, selling_price, quantity, updated_at: timestamp });
+    }
+  );
+});
+
+app.delete('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM products WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.json({ message: 'Product deleted successfully', id });
+  });
+});
+
 // Health Check API
 app.get('/api/health', (req, res) => {
   res.json({
