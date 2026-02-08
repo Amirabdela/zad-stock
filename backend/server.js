@@ -108,6 +108,94 @@ app.delete('/api/products/:id', (req, res) => {
   });
 });
 
+// Sales APIs
+app.get('/api/sales', (req, res) => {
+  db.all('SELECT * FROM sales ORDER BY timestamp DESC', [], (err, salesRows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!salesRows.length) {
+      return res.json([]);
+    }
+    db.all('SELECT * FROM sale_items', [], (err, itemsRows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      const salesMap = salesRows.map(sale => ({
+        ...sale,
+        items: itemsRows.filter(item => item.sale_id === sale.id)
+      }));
+      res.json(salesMap);
+    });
+  });
+});
+
+app.post('/api/sales', (req, res) => {
+  const { id, total_amount, total_cost, total_profit, timestamp, updated_at, items } = req.body;
+  if (!id || total_amount === undefined || !items || !items.length) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const time = timestamp || Date.now();
+  const updateTime = updated_at || Date.now();
+  
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    
+    const salesStmt = db.prepare(
+      `INSERT INTO sales (id, total_amount, total_cost, total_profit, timestamp, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    );
+    
+    salesStmt.run(id, total_amount, total_cost, total_profit, time, updateTime, function(err) {
+      if (err) {
+        db.run('ROLLBACK');
+        return res.status(500).json({ error: err.message });
+      }
+      
+      const itemsStmt = db.prepare(
+        `INSERT INTO sale_items (id, sale_id, product_id, product_name, quantity, cost_price, selling_price)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      );
+      
+      let itemsError = null;
+      for (const item of items) {
+        const itemId = 'item_' + Math.random().toString(36).substr(2, 9);
+        itemsStmt.run(
+          itemId, id, item.product_id, item.product_name, item.quantity, item.cost_price, item.selling_price,
+          (err) => {
+            if (err) itemsError = err;
+          }
+        );
+      }
+      
+      itemsStmt.finalize(() => {
+        if (itemsError) {
+          db.run('ROLLBACK');
+          return res.status(500).json({ error: itemsError.message });
+        }
+        
+        // Auto-decrease stock in backend database
+        const stockStmt = db.prepare('UPDATE products SET quantity = quantity - ? WHERE id = ?');
+        for (const item of items) {
+          stockStmt.run(item.quantity, item.product_id);
+        }
+        
+        stockStmt.finalize(() => {
+          db.run('COMMIT', (err) => {
+            if (err) {
+              db.run('ROLLBACK');
+              return res.status(500).json({ error: err.message });
+            }
+            res.status(201).json({ id, total_amount, total_cost, total_profit, timestamp: time, items });
+          });
+        });
+      });
+    });
+    salesStmt.finalize();
+  });
+});
+
 // Health Check API
 app.get('/api/health', (req, res) => {
   res.json({
