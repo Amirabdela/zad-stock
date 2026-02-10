@@ -321,6 +321,11 @@ export default function POS() {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     ${item.selling_price.toFixed(2)} each
                   </span>
+                  {(item.max_stock - item.quantity < 10) && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--warning-color)', display: 'block', marginTop: '0.125rem', fontWeight: '500' }}>
+                      ⚠️ Low stock alert ({item.max_stock - item.quantity} remaining)
+                    </span>
+                  )}
                 </div>
                 
                 {/* Quantity Controls */}
