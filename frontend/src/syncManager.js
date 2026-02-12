@@ -90,3 +90,64 @@ export async function processSyncQueue() {
 
   return { success: true, processedCount };
 }
+
+/**
+ * Main synchronization engine that pushes local changes and pulls latest server data.
+ */
+export async function syncWithServer() {
+  if (!checkOnlineStatus()) {
+    return { success: false, reason: 'offline' };
+  }
+
+  try {
+    // 1. Push local changes
+    const pushResult = await processSyncQueue();
+    if (!pushResult.success) {
+      return { success: false, reason: 'push_failed' };
+    }
+
+    // 2. Pull remote products
+    const prodRes = await fetch(`${BACKEND_URL}/products`);
+    if (prodRes.ok) {
+      const serverProducts = await prodRes.json();
+      for (const prod of serverProducts) {
+        const localProd = await db.products.get(prod.id);
+        if (!localProd || prod.updated_at > localProd.updated_at) {
+          await db.products.put(prod);
+        }
+      }
+    }
+
+    // 3. Pull remote sales
+    const salesRes = await fetch(`${BACKEND_URL}/sales`);
+    if (salesRes.ok) {
+      const serverSales = await salesRes.json();
+      for (const sale of serverSales) {
+        const localSale = await db.sales.get(sale.id);
+        if (!localSale) {
+          const { items, ...saleInfo } = sale;
+          await db.sales.put(saleInfo);
+          if (items && items.length) {
+            for (const item of items) {
+              await db.sale_items.put({
+                id: item.id || 'sitem_' + Math.random().toString(36).substr(2, 9),
+                sale_id: sale.id,
+                product_id: item.product_id,
+                product_name: item.product_name,
+                quantity: item.quantity,
+                cost_price: item.cost_price,
+                selling_price: item.selling_price
+              });
+            }
+          }
+        }
+      }
+    }
+
+    console.log('Synchronization complete!');
+    return { success: true };
+  } catch (err) {
+    console.error('Error during full synchronization:', err);
+    return { success: false, reason: 'network_error' };
+  }
+}

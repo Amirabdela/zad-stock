@@ -1,122 +1,238 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, RefreshCw, Wifi, WifiOff, Menu } from 'lucide-react';
+import Inventory from './components/Inventory';
+import POS from './components/POS';
+import { checkOnlineStatus, syncWithServer } from './syncManager';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+// Placeholder panels to prevent crashes before their scheduled days
+function DashboardPlaceholder() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="placeholder-panel" style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
+      <h2>Dashboard Overview</h2>
+      <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Metrics and visualization are scheduled for build on Feb 13–16.</p>
+    </div>
+  );
 }
 
-export default App
+function ReportsPlaceholder() {
+  return (
+    <div className="placeholder-panel" style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
+      <h2>Sales Reports & Exports</h2>
+      <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Daily/monthly reports and CSV exports are scheduled for build on Feb 17–20.</p>
+    </div>
+  );
+}
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('inventory'); // default to inventory for initial verification
+  const [isOnline, setIsOnline] = useState(checkOnlineStatus());
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('System ready');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Listen for online/offline events
+    const handleOnline = () => {
+      setIsOnline(true);
+      triggerSync();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncMessage('Offline - working locally');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial sync check
+    if (isOnline) {
+      triggerSync();
+    }
+
+    // Background sync interval (every 30 seconds)
+    const syncInterval = setInterval(() => {
+      if (checkOnlineStatus()) {
+        triggerSync();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(syncInterval);
+    };
+  }, []);
+
+  const triggerSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncMessage('Synchronizing data...');
+    try {
+      const result = await syncWithServer();
+      if (result.success) {
+        setSyncMessage('Database synced successfully');
+        // Dispatch custom event to tell active components to reload data
+        window.dispatchEvent(new Event('sync-done'));
+      } else {
+        if (result.reason === 'offline') {
+          setSyncMessage('Offline - changes saved locally');
+        } else {
+          setSyncMessage('Sync connection failed - will retry');
+        }
+      }
+    } catch (err) {
+      setSyncMessage('Sync error');
+    } finally {
+      setSyncing(false);
+      // Clear status message after 3 seconds
+      setTimeout(() => {
+        if (navigator.onLine) {
+          setSyncMessage('System active');
+        } else {
+          setSyncMessage('Offline mode');
+        }
+      }, 3000);
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'dashboard': return 'Dashboard Overview';
+      case 'inventory': return 'Inventory & Stock';
+      case 'pos': return 'Point of Sale (POS)';
+      case 'reports': return 'Sales Reports & Exports';
+      default: return 'ZAD Stock';
+    }
+  };
+
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardPlaceholder />;
+      case 'inventory':
+        return <Inventory isOnline={isOnline} />;
+      case 'pos':
+        return <POS />;
+      case 'reports':
+        return <ReportsPlaceholder />;
+      default:
+        return <Inventory isOnline={isOnline} />;
+    }
+  };
+
+  return (
+    <div className="app-container">
+      {/* Sidebar Navigation */}
+      <aside className={`app-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-logo">
+          <div className="logo-icon">Z</div>
+          <span className="logo-text">ZAD Stock</span>
+        </div>
+
+        <ul className="sidebar-menu">
+          <li 
+            className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('dashboard'); setMobileMenuOpen(false); }}
+          >
+            <LayoutDashboard size={18} />
+            <span>Dashboard</span>
+          </li>
+          <li 
+            className={`menu-item ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('inventory'); setMobileMenuOpen(false); }}
+          >
+            <Package size={18} />
+            <span>Inventory</span>
+          </li>
+          <li 
+            className={`menu-item ${activeTab === 'pos' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('pos'); setMobileMenuOpen(false); }}
+          >
+            <ShoppingCart size={18} />
+            <span>POS Screen</span>
+          </li>
+          <li 
+            className={`menu-item ${activeTab === 'reports' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
+          >
+            <BarChart3 size={18} />
+            <span>Reports</span>
+          </li>
+        </ul>
+
+        <div className="sidebar-footer">
+          <div className="online-badge-wrapper">
+            <div className={`online-dot ${isOnline ? 'online' : ''}`}></div>
+            <span>{isOnline ? 'Online Mode' : 'Offline Mode'}</span>
+            {isOnline && (
+              <button 
+                onClick={triggerSync} 
+                disabled={syncing}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  color: '#94a3b8', 
+                  display: 'flex', 
+                  marginLeft: 'auto',
+                  transition: 'color 0.2s' 
+                }}
+                className={syncing ? 'spin' : ''}
+                title="Sync database now"
+              >
+                <RefreshCw size={14} style={{ animation: syncing ? 'spin 1.5s infinite linear' : 'none' }} />
+              </button>
+            )}
+          </div>
+          <style>{`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </aside>
+
+      {/* Main Panel */}
+      <main className="app-main">
+        <header className="app-header">
+          <button 
+            className="btn-icon mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{ display: 'none', marginRight: '1rem' }}
+          >
+            <Menu size={20} />
+          </button>
+          
+          <div className="header-title">
+            <h1>{getPageTitle()}</h1>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+              {syncMessage}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: isOnline ? 'var(--primary-color)' : 'var(--danger-color)', fontWeight: '600', fontSize: '0.85rem' }}>
+              {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
+              <span style={{ textTransform: 'capitalize' }}>{isOnline ? 'Connected' : 'Disconnected'}</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="app-body">
+          {renderActiveComponent()}
+        </div>
+      </main>
+
+      <style>{`
+        @media (max-width: 968px) {
+          .mobile-menu-toggle {
+            display: inline-flex !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
