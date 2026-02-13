@@ -2,18 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Package, ShoppingCart, BarChart3, RefreshCw, Wifi, WifiOff, Menu } from 'lucide-react';
 import Inventory from './components/Inventory';
 import POS from './components/POS';
+import Dashboard from './components/Dashboard';
 import { checkOnlineStatus, syncWithServer } from './syncManager';
 import './App.css';
-
-// Placeholder panels to prevent crashes before their scheduled days
-function DashboardPlaceholder() {
-  return (
-    <div className="placeholder-panel" style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
-      <h2>Dashboard Overview</h2>
-      <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Metrics and visualization are scheduled for build on Feb 13–16.</p>
-    </div>
-  );
-}
 
 function ReportsPlaceholder() {
   return (
@@ -110,7 +101,7 @@ export default function App() {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardPlaceholder />;
+        return <Dashboard />;
       case 'inventory':
         return <Inventory isOnline={isOnline} />;
       case 'pos':
