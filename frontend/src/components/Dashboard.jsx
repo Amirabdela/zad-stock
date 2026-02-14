@@ -113,7 +113,7 @@ export default function Dashboard() {
             ${metrics.profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div style={statCardFooterStyle}>
-            Margin: {((metrics.profit / metrics.revenue) * 100).toFixed(1)}%
+            Margin: {metrics.revenue > 0 ? ((metrics.profit / metrics.revenue) * 100).toFixed(1) : '0.0'}%
           </div>
         </div>
 
@@ -127,7 +127,13 @@ export default function Dashboard() {
           </div>
           <div style={statCardValueStyle}>{metrics.totalProducts} Products</div>
           <div style={statCardFooterStyle}>
-            <span style={{ color: 'var(--danger-color)', fontWeight: '600' }}>{metrics.lowStockCount} Low stock</span>, {metrics.outOfStockCount} out
+            {metrics.outOfStockCount > 0 ? (
+              <span style={{ color: 'var(--danger-color)', fontWeight: '600' }}>{metrics.outOfStockCount} Out of stock!</span>
+            ) : metrics.lowStockCount > 0 ? (
+              <span style={{ color: 'var(--warning-color)', fontWeight: '600' }}>{metrics.lowStockCount} Low stock alerts</span>
+            ) : (
+              <span style={{ color: 'var(--success-color)', fontWeight: '600' }}>All stock levels normal</span>
+            )}
           </div>
         </div>
       </div>
