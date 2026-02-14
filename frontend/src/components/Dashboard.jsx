@@ -29,16 +29,25 @@ export default function Dashboard() {
       const lowStockCount = await db.products.filter(p => p.quantity > 0 && p.quantity < 10).count();
       const outOfStockCount = await db.products.filter(p => p.quantity === 0).count();
 
-      setMetrics(prev => ({
-        ...prev,
+      // 2. Query sales and calculate revenue, cost, profit
+      const sales = await db.sales.toArray();
+      let revenue = 0;
+      let cost = 0;
+      let profit = 0;
+      for (const sale of sales) {
+        revenue += sale.total_amount;
+        cost += sale.total_cost;
+        profit += sale.total_profit;
+      }
+
+      setMetrics({
+        revenue,
+        cost,
+        profit,
         totalProducts,
         lowStockCount,
-        outOfStockCount,
-        // Mock revenue/cost/profit for next commit on Feb 14
-        revenue: 12450.50,
-        cost: 8120.20,
-        profit: 4330.30
-      }));
+        outOfStockCount
+      });
     } catch (err) {
       console.error('Error loading dashboard metrics:', err);
     } finally {
