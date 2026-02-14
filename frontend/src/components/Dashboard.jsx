@@ -24,16 +24,21 @@ export default function Dashboard() {
   const loadMetrics = async () => {
     setLoading(true);
     try {
-      // Mock metrics for layout structure on Feb 13.
-      // (Full DB queries will be implemented on Feb 14).
-      setMetrics({
+      // 1. Query stock & product metrics from local IndexedDB
+      const totalProducts = await db.products.count();
+      const lowStockCount = await db.products.filter(p => p.quantity > 0 && p.quantity < 10).count();
+      const outOfStockCount = await db.products.filter(p => p.quantity === 0).count();
+
+      setMetrics(prev => ({
+        ...prev,
+        totalProducts,
+        lowStockCount,
+        outOfStockCount,
+        // Mock revenue/cost/profit for next commit on Feb 14
         revenue: 12450.50,
         cost: 8120.20,
-        profit: 4330.30,
-        totalProducts: 42,
-        lowStockCount: 5,
-        outOfStockCount: 2
-      });
+        profit: 4330.30
+      }));
     } catch (err) {
       console.error('Error loading dashboard metrics:', err);
     } finally {
