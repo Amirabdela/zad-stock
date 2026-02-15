@@ -12,6 +12,7 @@ export default function Dashboard() {
     outOfStockCount: 0
   });
   const [trendData, setTrendData] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +56,26 @@ export default function Dashboard() {
         last7Days.push({ date: dateStr, amount: dayRevenue });
       }
 
+      // 4. Query best sellers from sale_items
+      const saleItems = await db.sale_items.toArray();
+      const productSales = {};
+      
+      for (const item of saleItems) {
+        if (!productSales[item.product_id]) {
+          productSales[item.product_id] = {
+            name: item.product_name,
+            qtySold: 0,
+            revenue: 0
+          };
+        }
+        productSales[item.product_id].qtySold += item.quantity;
+        productSales[item.product_id].revenue += item.selling_price * item.quantity;
+      }
+      
+      const sortedBestSellers = Object.values(productSales)
+        .sort((a, b) => b.qtySold - a.qtySold)
+        .slice(0, 5); // top 5
+
       setMetrics({
         revenue,
         cost,
@@ -64,6 +85,7 @@ export default function Dashboard() {
         outOfStockCount
       });
       setTrendData(last7Days);
+      setBestSellers(sortedBestSellers);
     } catch (err) {
       console.error('Error loading dashboard metrics:', err);
     } finally {
@@ -278,8 +300,27 @@ export default function Dashboard() {
           <div style={detailCardHeaderStyle}>
             <h3 style={detailCardTitleStyle}><Award size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem', color: 'var(--warning-color)' }} /> Product Highlights</h3>
           </div>
-          <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)', margin: '1rem' }}>
-            Best Sellers & Alerts Slot (Planned for Feb 15–16)
+          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '280px', overflowY: 'auto' }}>
+            {bestSellers.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h4 style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.25rem', letterSpacing: '0.05em' }}>Top Selling Products</h4>
+                {bestSellers.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.75rem', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)' }}>{item.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.qtySold} units sold</div>
+                    </div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: '700', color: 'var(--primary-color)' }}>
+                      ${item.revenue.toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                No sales data recorded yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
