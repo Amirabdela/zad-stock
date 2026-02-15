@@ -11,12 +11,12 @@ export default function Dashboard() {
     lowStockCount: 0,
     outOfStockCount: 0
   });
+  const [trendData, setTrendData] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadMetrics();
-    // Re-load metrics if a sync event occurs
     window.addEventListener('sync-done', loadMetrics);
     return () => window.removeEventListener('sync-done', loadMetrics);
   }, []);
@@ -40,6 +40,21 @@ export default function Dashboard() {
         profit += sale.total_profit;
       }
 
+      // 3. Query sales history for trend chart (last 7 days)
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
+        
+        const daySales = sales.filter(s => s.timestamp >= startOfDay && s.timestamp < endOfDay);
+        const dayRevenue = daySales.reduce((sum, s) => sum + s.total_amount, 0);
+        
+        last7Days.push({ date: dateStr, amount: dayRevenue });
+      }
+
       setMetrics({
         revenue,
         cost,
@@ -48,6 +63,7 @@ export default function Dashboard() {
         lowStockCount,
         outOfStockCount
       });
+      setTrendData(last7Days);
     } catch (err) {
       console.error('Error loading dashboard metrics:', err);
     } finally {
