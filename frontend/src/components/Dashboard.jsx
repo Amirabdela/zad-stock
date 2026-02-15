@@ -71,6 +71,102 @@ export default function Dashboard() {
     }
   };
 
+  const renderTrendChart = () => {
+    if (trendData.length === 0) return null;
+    
+    const maxVal = Math.max(...trendData.map(d => d.amount), 10);
+    const height = 180;
+    const width = 450;
+    const padding = 30;
+    
+    const points = trendData.map((d, index) => {
+      const x = padding + (index * (width - padding * 2)) / (trendData.length - 1);
+      const y = height - padding - (d.amount / maxVal) * (height - padding * 2);
+      return { x, y, amount: d.amount, date: d.date };
+    });
+    
+    const pathD = points.reduce((acc, p, index) => {
+      return index === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`;
+    }, '');
+
+    const areaD = points.length > 0 
+      ? `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
+      : '';
+      
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="240px" style={{ padding: '0.5rem' }}>
+        <defs>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary-color)" stopOpacity="0.2"/>
+            <stop offset="100%" stopColor="var(--primary-color)" stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+          const y = padding + ratio * (height - padding * 2);
+          return (
+            <line 
+              key={idx}
+              x1={padding} 
+              y1={y} 
+              x2={width - padding} 
+              y2={y} 
+              stroke="#f1f5f9" 
+              strokeWidth="1"
+            />
+          );
+        })}
+        
+        <path d={areaD} fill="url(#chartGradient)" />
+        
+        <path 
+          d={pathD} 
+          fill="none" 
+          stroke="var(--primary-color)" 
+          strokeWidth="3" 
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        
+        {points.map((p, idx) => (
+          <g key={idx}>
+            <circle 
+              cx={p.x} 
+              cy={p.y} 
+              r="4" 
+              fill="var(--bg-card)" 
+              stroke="var(--primary-color)" 
+              strokeWidth="2"
+            />
+            <title>{`${p.date}: $${p.amount.toFixed(2)}`}</title>
+            <text 
+              x={p.x} 
+              y={height - 8} 
+              textAnchor="middle" 
+              fontSize="9" 
+              fill="var(--text-muted)"
+              fontWeight="500"
+            >
+              {p.date}
+            </text>
+            {p.amount > 0 && (
+              <text 
+                x={p.x} 
+                y={p.y - 10} 
+                textAnchor="middle" 
+                fontSize="8" 
+                fill="var(--primary-color)"
+                fontWeight="600"
+              >
+                ${p.amount.toFixed(0)}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+    );
+  };
+
   return (
     <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div className="module-header" style={{ marginBottom: 0 }}>
@@ -168,8 +264,12 @@ export default function Dashboard() {
           <div style={detailCardHeaderStyle}>
             <h3 style={detailCardTitleStyle}><TrendingUp size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem', color: 'var(--primary-color)' }} /> Sales Trends</h3>
           </div>
-          <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)', margin: '1rem' }}>
-            Interactive Sales Chart Slot (Planned for Feb 15)
+          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '280px' }}>
+            {trendData.length > 0 ? (
+              renderTrendChart()
+            ) : (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No sales transactions recorded yet.</div>
+            )}
           </div>
         </div>
 
