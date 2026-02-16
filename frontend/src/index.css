@@ -647,6 +647,24 @@ body {
   stroke-width: 3.5px;
 }
 
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 1.5rem;
+}
+
 /* Responsive UI Adjustments */
 @media (max-width: 968px) {
   :root {
@@ -683,6 +701,10 @@ body {
   }
   
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
     grid-template-columns: 1fr;
   }
 }

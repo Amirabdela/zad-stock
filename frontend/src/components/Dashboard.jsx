@@ -197,7 +197,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div className="dashboard-container">
       <div className="module-header" style={{ marginBottom: 0 }}>
         <div>
           <h2>Dashboard Overview</h2>
@@ -206,14 +206,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div 
-        className="stats-grid" 
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
-          gap: '1.5rem' 
-        }}
-      >
+      <div className="stats-grid">
         {/* Revenue Card */}
         <div className="stat-card" style={statCardStyle}>
           <div style={statCardHeaderStyle}>
@@ -280,14 +273,7 @@ export default function Dashboard() {
       </div>
 
       {/* Details Grid (Charts and Lists Slots) */}
-      <div 
-        className="details-grid" 
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '7fr 5fr', 
-          gap: '1.5rem' 
-        }}
-      >
+      <div className="details-grid">
         {/* Sales Trend Chart Shell */}
         <div className="chart-card" style={detailCardStyle}>
           <div style={detailCardHeaderStyle}>
