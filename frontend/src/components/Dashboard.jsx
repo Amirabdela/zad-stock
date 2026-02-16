@@ -13,6 +13,7 @@ export default function Dashboard() {
   });
   const [trendData, setTrendData] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -76,6 +77,11 @@ export default function Dashboard() {
         .sort((a, b) => b.qtySold - a.qtySold)
         .slice(0, 5); // top 5
 
+      // 5. Query low stock products list
+      const lowStockList = await db.products
+        .filter(p => p.quantity > 0 && p.quantity < 10)
+        .toArray();
+
       setMetrics({
         revenue,
         cost,
@@ -86,6 +92,7 @@ export default function Dashboard() {
       });
       setTrendData(last7Days);
       setBestSellers(sortedBestSellers);
+      setLowStockProducts(lowStockList.slice(0, 3));
     } catch (err) {
       console.error('Error loading dashboard metrics:', err);
     } finally {
@@ -300,27 +307,41 @@ export default function Dashboard() {
           <div style={detailCardHeaderStyle}>
             <h3 style={detailCardTitleStyle}><Award size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem', color: 'var(--warning-color)' }} /> Product Highlights</h3>
           </div>
-          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '280px', overflowY: 'auto' }}>
-            {bestSellers.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <h4 style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.25rem', letterSpacing: '0.05em' }}>Top Selling Products</h4>
-                {bestSellers.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.75rem', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.qtySold} units sold</div>
+          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '280px', overflowY: 'auto' }}>
+            {/* Top Sellers Section */}
+            <div>
+              <h4 style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Top Selling Products</h4>
+              {bestSellers.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {bestSellers.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.8125rem' }}>
+                      <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{item.name}</span>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{item.qtySold} sold</span>
                     </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '700', color: 'var(--primary-color)' }}>
-                      ${item.revenue.toFixed(2)}
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', padding: '0.5rem 0' }}>No sales data yet.</div>
+              )}
+            </div>
+
+            {/* Low Stock Alerts Section */}
+            <div>
+              <h4 style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Stock Alerts</h4>
+              {lowStockProducts.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {lowStockProducts.map((prod) => (
+                    <div key={prod.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', backgroundColor: 'var(--warning-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid #fde68a', fontSize: '0.8125rem', color: 'var(--warning-color)' }}>
+                      <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                      <span style={{ fontWeight: '600', flexGrow: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prod.name}</span>
+                      <span style={{ fontWeight: '700' }}>{prod.quantity} left</span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                No sales data recorded yet.
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.8125rem', color: 'var(--success-color)', fontWeight: '600', padding: '0.5rem 0' }}>✓ All stock levels healthy</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
