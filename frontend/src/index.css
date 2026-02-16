@@ -617,6 +617,36 @@ body {
   padding-top: 1.25rem;
 }
 
+/* Dashboard Card Transitions and Animations */
+.stat-card {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  cursor: default;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color) !important;
+}
+
+.chart-card, .widgets-card {
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.chart-card:hover, .widgets-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: #cbd5e1;
+}
+
+.chart-node circle {
+  transition: r var(--transition-fast), stroke-width var(--transition-fast);
+}
+
+.chart-node:hover circle {
+  r: 6;
+  stroke-width: 3.5px;
+}
+
 /* Responsive UI Adjustments */
 @media (max-width: 968px) {
   :root {

@@ -158,7 +158,7 @@ export default function Dashboard() {
         />
         
         {points.map((p, idx) => (
-          <g key={idx}>
+          <g key={idx} className="chart-node">
             <circle 
               cx={p.x} 
               cy={p.y} 
