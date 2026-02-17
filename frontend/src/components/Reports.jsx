@@ -23,11 +23,39 @@ export default function Reports() {
   const loadReport = async () => {
     setLoading(true);
     try {
-      // Mock data for layout shell on Feb 17 Commit 1
-      setReportData([
-        { date: '2026-02-17', txCount: 12, revenue: 1540.00, cost: 980.00, profit: 560.00 },
-        { date: '2026-02-16', txCount: 8, revenue: 840.50, cost: 510.00, profit: 330.50 }
-      ]);
+      const sales = await db.sales.toArray();
+      const startMs = new Date(startDate + 'T00:00:00').getTime();
+      const endMs = new Date(endDate + 'T23:59:59').getTime();
+      
+      const filteredSales = sales.filter(s => s.timestamp >= startMs && s.timestamp <= endMs);
+      
+      if (reportType === 'daily') {
+        const dailyGroups = {};
+        for (const sale of filteredSales) {
+          const dateKey = new Date(sale.timestamp).toISOString().split('T')[0];
+          if (!dailyGroups[dateKey]) {
+            dailyGroups[dateKey] = {
+              date: dateKey,
+              txCount: 0,
+              revenue: 0,
+              cost: 0,
+              profit: 0
+            };
+          }
+          dailyGroups[dateKey].txCount++;
+          dailyGroups[dateKey].revenue += sale.total_amount;
+          dailyGroups[dateKey].cost += sale.total_cost;
+          dailyGroups[dateKey].profit += sale.total_profit;
+        }
+        
+        const sortedData = Object.values(dailyGroups).sort((a, b) => b.date.localeCompare(a.date));
+        setReportData(sortedData);
+      } else {
+        // Monthly report aggregation placeholder for Feb 17 Commit 3
+        setReportData([
+          { date: '2026-02 (Mock)', txCount: 20, revenue: 2380.50, cost: 1490.00, profit: 890.50 }
+        ]);
+      }
     } catch (err) {
       console.error('Failed to load report:', err);
     } finally {
