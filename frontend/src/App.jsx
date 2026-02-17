@@ -6,14 +6,7 @@ import Dashboard from './components/Dashboard';
 import { checkOnlineStatus, syncWithServer } from './syncManager';
 import './App.css';
 
-function ReportsPlaceholder() {
-  return (
-    <div className="placeholder-panel" style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
-      <h2>Sales Reports & Exports</h2>
-      <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Daily/monthly reports and CSV exports are scheduled for build on Feb 17–20.</p>
-    </div>
-  );
-}
+import Reports from './components/Reports';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('inventory'); // default to inventory for initial verification
@@ -107,7 +100,7 @@ export default function App() {
       case 'pos':
         return <POS />;
       case 'reports':
-        return <ReportsPlaceholder />;
+        return <Reports />;
       default:
         return <Inventory isOnline={isOnline} />;
     }
