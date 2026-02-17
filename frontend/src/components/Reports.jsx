@@ -51,10 +51,27 @@ export default function Reports() {
         const sortedData = Object.values(dailyGroups).sort((a, b) => b.date.localeCompare(a.date));
         setReportData(sortedData);
       } else {
-        // Monthly report aggregation placeholder for Feb 17 Commit 3
-        setReportData([
-          { date: '2026-02 (Mock)', txCount: 20, revenue: 2380.50, cost: 1490.00, profit: 890.50 }
-        ]);
+        const monthlyGroups = {};
+        for (const sale of filteredSales) {
+          const date = new Date(sale.timestamp);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          if (!monthlyGroups[monthKey]) {
+            monthlyGroups[monthKey] = {
+              date: monthKey,
+              txCount: 0,
+              revenue: 0,
+              cost: 0,
+              profit: 0
+            };
+          }
+          monthlyGroups[monthKey].txCount++;
+          monthlyGroups[monthKey].revenue += sale.total_amount;
+          monthlyGroups[monthKey].cost += sale.total_cost;
+          monthlyGroups[monthKey].profit += sale.total_profit;
+        }
+        
+        const sortedData = Object.values(monthlyGroups).sort((a, b) => b.date.localeCompare(a.date));
+        setReportData(sortedData);
       }
     } catch (err) {
       console.error('Failed to load report:', err);
