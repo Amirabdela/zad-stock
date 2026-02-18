@@ -41,9 +41,25 @@ export function exportProductsToCSV(products) {
   downloadCSV(csvContent, `zad_stock_inventory_${new Date().toISOString().split('T')[0]}.csv`);
 }
 
-/**
- * Export reports placeholder for Feb 18 Commit 2.
- */
 export function exportReportToCSV(reportData, type) {
-  console.log('Report export placeholder called', reportData, type);
+  if (!reportData || !reportData.length) {
+    alert('No report data to export.');
+    return;
+  }
+
+  const dateHeader = type === 'daily' ? 'Date' : 'Month';
+  const headers = [dateHeader, 'Sales Transactions', 'Total Revenue ($)', 'Total COGS ($)', 'Net Profit ($)', 'Avg Transaction Value ($)'];
+  
+  const rows = reportData.map(r => [
+    r.date,
+    r.txCount,
+    r.revenue.toFixed(2),
+    r.cost.toFixed(2),
+    r.profit.toFixed(2),
+    r.txCount > 0 ? (r.revenue / r.txCount).toFixed(2) : '0.00'
+  ]);
+
+  const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+  const filePrefix = type === 'daily' ? 'daily_sales' : 'monthly_sales';
+  downloadCSV(csvContent, `zad_stock_${filePrefix}_report_${new Date().toISOString().split('T')[0]}.csv`);
 }
