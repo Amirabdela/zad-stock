@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../db';
 import { Calendar, Download, Printer, ChevronRight, FileText } from 'lucide-react';
+import { exportReportToCSV } from '../utils/csvExporter';
 
 export default function Reports() {
   const [reportType, setReportType] = useState('daily'); // 'daily' | 'monthly'
@@ -87,6 +88,12 @@ export default function Reports() {
           <h2>Reports & Analytics</h2>
           <p className="subtitle">View financial metrics, sales reports, and export spreadsheets</p>
         </div>
+        <button 
+          className="btn btn-secondary btn-with-icon" 
+          onClick={() => exportReportToCSV(reportData, reportType)}
+        >
+          <Download size={18} /> Export CSV
+        </button>
       </div>
 
       {/* Date Filter & Tab Bar */}

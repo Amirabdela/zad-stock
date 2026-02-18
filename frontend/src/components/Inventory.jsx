@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, queueSyncAction } from '../db';
-import { Plus, Edit2, Trash2, Search, AlertCircle, X, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, AlertCircle, X, ChevronRight, Download } from 'lucide-react';
+import { exportProductsToCSV } from '../utils/csvExporter';
 
 export default function Inventory({ isOnline }) {
   const [products, setProducts] = useState([]);
@@ -139,9 +140,14 @@ export default function Inventory({ isOnline }) {
           <h2>Inventory Management</h2>
           <p className="subtitle">Manage shop products, stock levels, and pricing</p>
         </div>
-        <button className="btn btn-primary btn-with-icon" onClick={handleOpenAddForm}>
-          <Plus size={18} /> Add Product
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-secondary btn-with-icon" onClick={() => exportProductsToCSV(products)}>
+            <Download size={18} /> Export CSV
+          </button>
+          <button className="btn btn-primary btn-with-icon" onClick={handleOpenAddForm}>
+            <Plus size={18} /> Add Product
+          </button>
+        </div>
       </div>
 
       <div className="filter-bar">
