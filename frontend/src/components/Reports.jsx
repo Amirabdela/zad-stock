@@ -88,12 +88,20 @@ export default function Reports() {
           <h2>Reports & Analytics</h2>
           <p className="subtitle">View financial metrics, sales reports, and export spreadsheets</p>
         </div>
-        <button 
-          className="btn btn-secondary btn-with-icon" 
-          onClick={() => exportReportToCSV(reportData, reportType)}
-        >
-          <Download size={18} /> Export CSV
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button 
+            className="btn btn-secondary btn-with-icon" 
+            onClick={() => exportReportToCSV(reportData, reportType)}
+          >
+            <Download size={18} /> Export CSV
+          </button>
+          <button 
+            className="btn btn-primary btn-with-icon" 
+            onClick={() => window.print()}
+          >
+            <Printer size={18} /> Print Report
+          </button>
+        </div>
       </div>
 
       {/* Date Filter & Tab Bar */}
