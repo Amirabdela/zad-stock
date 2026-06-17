@@ -1,3 +1,7 @@
+/**
+ * Backend server for ZAD Stock application.
+ * Provides REST API endpoints for products, sales, and health checks.
+ */
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -43,6 +47,10 @@ function initializeDatabase() {
 }
 
 // Product CRUD APIs
+/**
+ * Get all products.
+ * Responds with an array of product objects sorted by name.
+ */
 app.get('/api/products', (req, res) => {
   db.all('SELECT * FROM products ORDER BY name ASC', [], (err, rows) => {
     if (err) {
@@ -52,6 +60,10 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+/**
+ * Create a new product.
+ * Expects product fields in request body and returns the created product.
+ */
 app.post('/api/products', (req, res) => {
   const { id, name, category, cost_price, selling_price, quantity, updated_at } = req.body;
   if (!id || !name || cost_price === undefined || selling_price === undefined || quantity === undefined) {
@@ -71,6 +83,10 @@ app.post('/api/products', (req, res) => {
   );
 });
 
+/**
+ * Update an existing product by ID.
+ * Requires all product fields in request body; updates the record and returns the updated product.
+ */
 app.put('/api/products/:id', (req, res) => {
   const { id } = req.params;
   const { name, category, cost_price, selling_price, quantity, updated_at } = req.body;
@@ -95,6 +111,10 @@ app.put('/api/products/:id', (req, res) => {
   );
 });
 
+/**
+ * Delete a product by ID.
+ * Returns a success message if deletion occurs.
+ */
 app.delete('/api/products/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM products WHERE id = ?', [id], function(err) {
@@ -109,6 +129,10 @@ app.delete('/api/products/:id', (req, res) => {
 });
 
 // Sales APIs
+/**
+ * Retrieve all sales records with their items.
+ * Returns an empty array if no sales exist.
+ */
 app.get('/api/sales', (req, res) => {
   db.all('SELECT * FROM sales ORDER BY timestamp DESC', [], (err, salesRows) => {
     if (err) {
@@ -131,6 +155,10 @@ app.get('/api/sales', (req, res) => {
   });
 });
 
+/**
+ * Record a new sale.
+ * Expects total amounts and items array in request body; creates sale and associated items, updates product stock.
+ */
 app.post('/api/sales', (req, res) => {
   const { id, total_amount, total_cost, total_profit, timestamp, updated_at, items } = req.body;
   if (!id || total_amount === undefined || !items || !items.length) {
@@ -197,6 +225,10 @@ app.post('/api/sales', (req, res) => {
 });
 
 // Health Check API
+/**
+ * Health check endpoint.
+ * Returns service status and timestamp.
+ */
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
