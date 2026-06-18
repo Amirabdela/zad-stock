@@ -1,4 +1,8 @@
-const assert = require('assert');
+/**
+ * Test suite for stock data handling.
+ * Ensures stock retrieval and update functions work as expected.
+ */
+
 const sqlite3 = require('sqlite3').verbose();
 
 // Unit test configuration

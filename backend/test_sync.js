@@ -1,4 +1,8 @@
-const assert = require('assert');
+/**
+ * Test suite for the sync queue halting mechanism.
+ * Verifies that sync stops on the first failure to maintain correct order.
+ */
+
 
 // Simulate processing the sync queue
 async function processSyncQueueMock(queue, serverMock) {

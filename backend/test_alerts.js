@@ -1,4 +1,8 @@
-const assert = require('assert');
+/**
+ * Test suite for product stock alert classification.
+ * Validates low stock, out of stock, and normal stock thresholds.
+ */
+
 
 // Alert classification helper
 function getStockStatus(quantity) {
